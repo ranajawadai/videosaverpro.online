@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-P7V9BZ63RF"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+        gtag('config', 'G-P7V9BZ63RF');
+    </script>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#6366f1">
+    <title>Contact Us - VideoSaver Pro</title>
+    <meta name="description"
+        content="Contact VideoSaver Pro for support, questions, or feedback about our video download service.">
+    <link rel="canonical" href="https://www.videosaverpro.online/contact.html">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="Contact Us - VideoSaver Pro">
+    <meta property="og:description" content="Get in touch with VideoSaver Pro for support or feedback.">
+    <meta property="og:url" content="https://www.videosaverpro.online/contact.html">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="VideoSaver Pro">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="Contact Us - VideoSaver Pro">
+    <meta name="twitter:description" content="Get in touch with VideoSaver Pro for support or feedback.">
+
+    <link rel="stylesheet" href="/styles.css">
+    <style>
+        .contact-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .form-group label {
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            padding: 1rem;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            font-size: 1rem;
+            font-family: inherit;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+        }
+
+        .form-group textarea {
+            min-height: 150px;
+            resize: vertical;
+        }
+
+        .submit-btn {
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4);
+        }
+
+        .contact-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .info-card {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.05), rgba(139, 92, 246, 0.05));
+            padding: 1.5rem;
+            border-radius: 16px;
+            text-align: center;
+        }
+
+        .info-card h3 {
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Header -->
+    <header id="header">
+        <nav class="nav">
+            <a href="/" class="logo">
+                <div class="logo-icon">
+                    <svg width="20" height="20" fill="none" stroke="white" stroke-width="2.5" viewBox="0 0 24 24">
+                        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" />
+                    </svg>
+                </div>
+                <span>VideoSaver Pro</span>
+            </a>
+
+            <div class="nav-links">
+                <a href="/#features">Features</a>
+                <a href="/articles/">Blog</a>
+                <a href="/#faq">FAQ</a>
+                <button class="btn-primary" onclick="location.href='/'">Download Now</button>
+            </div>
+
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()" aria-label="Toggle menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+        </nav>
+    </header>
+
+    <!-- Mobile Menu -->
+    <div class="mobile-overlay" id="mobileOverlay" onclick="toggleMobileMenu()"></div>
+    <div class="mobile-nav" id="mobileNav">
+        <a href="/" onclick="toggleMobileMenu()">Home</a>
+        <a href="/#features" onclick="toggleMobileMenu()">Features</a>
+        <a href="/articles/" onclick="toggleMobileMenu()">Blog</a>
+        <a href="/#faq" onclick="toggleMobileMenu()">FAQ</a>
+    </div>
+
+    <!-- Main Content -->
+    <main style="padding-top: 100px; min-height: calc(100vh - 300px);">
+        <div style="max-width: 800px; margin: 0 auto; padding: 2rem;">
+            <article
+                style="background: white; padding: 3rem; border-radius: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.08);">
+                <h1 style="font-size: 2.5rem; margin-bottom: 0.5rem;">Contact Us</h1>
+                <p style="color: var(--text-light); margin-bottom: 2rem;">Have questions, feedback, or need support?
+                    We're here to help!</p>
+
+                <form class="contact-form" action="https://formspree.io/f/mvzrnzyo" method="POST" id="contactForm">
+                    <div class="form-group">
+                        <label for="name">Your Name</label>
+                        <input type="text" id="name" name="name" required placeholder="John Doe">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email">Email Address</label>
+                        <input type="email" id="email" name="email" required placeholder="john@example.com">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="subject">Subject</label>
+                        <select id="subject" name="subject" required>
+                            <option value="">Select a topic...</option>
+                            <option value="support">Technical Support</option>
+                            <option value="feedback">Feedback & Suggestions</option>
+                            <option value="dmca">DMCA Takedown Request</option>
+                            <option value="business">Business Inquiry</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="message">Your Message</label>
+                        <textarea id="message" name="message" required
+                            placeholder="Tell us how we can help..."></textarea>
+                    </div>
+
+                    <button type="submit" class="submit-btn">Send Message</button>
+                </form>
+
+                <div class="contact-info">
+                    <div class="info-card">
+                        <h3>💬 Support</h3>
+                        <p style="color: var(--text-light);">Fill out the form above and we'll respond within 24-48
+                            hours.</p>
+                    </div>
+                    <div class="info-card">
+                        <h3>⚡ Quick Help</h3>
+                        <p style="color: var(--text-light);">Check our <a href="/#faq"
+                                style="color: var(--primary);">FAQ section</a> for instant answers.</p>
+                    </div>
+                </div>
+            </article>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-grid">
+            <div class="footer-col">
+                <h4>VideoSaver Pro</h4>
+                <p>The most powerful online video downloader. Download videos from 1000+ websites in HD quality without
+                    watermark.</p>
+            </div>
+            <div class="footer-col">
+                <h4>Quick Links</h4>
+                <ul>
+                    <li><a href="/">Home</a></li>
+                    <li><a href="/#features">Features</a></li>
+                    <li><a href="/#faq">FAQ</a></li>
+                    <li><a href="/articles/">Blog</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h4>Legal</h4>
+                <ul>
+                    <li><a href="/privacy.html">Privacy Policy</a></li>
+                    <li><a href="/terms.html">Terms of Service</a></li>
+                    <li><a href="/dmca.html">DMCA</a></li>
+                    <li><a href="/contact.html">Contact Us</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 VideoSaver Pro. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="/script.js"></script>
+    <script>
+        // Simple form validation feedback
+        document.getElementById('contactForm').addEventListener('submit', function (e) {
+            const btn = this.querySelector('.submit-btn');
+            btn.textContent = 'Sending...';
+            btn.disabled = true;
+        });
+    </script>
+</body>
+
+</html>
