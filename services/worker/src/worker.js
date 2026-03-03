@@ -1,6 +1,7 @@
 import { Worker } from "bullmq";
 import IORedis from "ioredis";
 import pg from "pg";
+import { resolveJobMedia } from "./extractor.js";
 
 const redisUrl = process.env.REDIS_URL || "redis://localhost:6379";
 const jobQueueName = process.env.JOB_QUEUE_NAME || "video_jobs";
@@ -43,40 +44,16 @@ async function processDownloadJob(data) {
     await new Promise((r) => setTimeout(r, 250));
     await markJob(id, { progress: 30, thumbnail_url: "https://www.videosaverpro.online/og-image.png" });
 
-    // Stage 2: resolve direct media URL via RapidAPI (if configured)
+    // Stage 2: resolve direct media URL via self-hosted extractor (yt-dlp)
     await new Promise((r) => setTimeout(r, 250));
     await markJob(id, { progress: 55, title: `Processing ${quality || "best"} ${format || "mp4"}` });
-
-    const rapidApiKey = process.env.RAPIDAPI_KEY || "";
-    let directMediaUrl = null;
-
-    if (rapidApiKey) {
-        const upstream = await fetch("https://social-download-all-in-one.p.rapidapi.com/v1/social/autolink", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "X-RapidAPI-Key": rapidApiKey,
-                "X-RapidAPI-Host": "social-download-all-in-one.p.rapidapi.com"
-            },
-            body: JSON.stringify({ url })
-        });
-
-        if (upstream.ok) {
-            const payload = await upstream.json();
-            const media = payload?.medias?.find((m) => !m.watermark && m.extension === "mp4") || payload?.medias?.[0];
-            if (media?.url) {
-                directMediaUrl = media.url;
-                await markJob(id, {
-                    title: payload?.title || "Download ready",
-                    thumbnail_url: payload?.thumbnail || "https://www.videosaverpro.online/og-image.png"
-                });
-            }
-        }
-    }
-
-    if (!directMediaUrl) {
-        throw new Error("No direct media URL resolved. Set RAPIDAPI_KEY and retry.");
-    }
+    const resolved = await resolveJobMedia(url, quality, format);
+    const directMediaUrl = resolved?.mediaUrl || null;
+    if (!directMediaUrl) throw new Error("No direct media URL resolved by self-hosted extractor.");
+    await markJob(id, {
+        title: resolved.title || "Download ready",
+        thumbnail_url: resolved.thumbnail || "https://www.videosaverpro.online/og-image.png"
+    });
 
     // Stage 3: store remote target key for signed redirect
     const storageKey = `remote:${Buffer.from(directMediaUrl, "utf8").toString("base64url")}`;

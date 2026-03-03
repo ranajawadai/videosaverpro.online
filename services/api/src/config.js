@@ -9,7 +9,8 @@ export const config = {
     inspectCacheTtlSeconds: Number(process.env.INSPECT_CACHE_TTL_SECONDS || 300),
     requireApiKey: String(process.env.REQUIRE_API_KEY || "false") === "true",
     serviceApiKey: process.env.SERVICE_API_KEY || "",
-    signedUrlTtlSeconds: Number(process.env.SIGNED_URL_TTL_SECONDS || 3600)
+    signedUrlTtlSeconds: Number(process.env.SIGNED_URL_TTL_SECONDS || 3600),
+    ytDlpTimeoutMs: Number(process.env.YTDLP_TIMEOUT_MS || 30000)
 };
 
 export const supportedPlatforms = [

@@ -17,6 +17,6 @@ This folder contains the backend skeleton for:
    - `POST http://localhost:8080/v1/jobs` with `{"url":"https://www.tiktok.com/@user/video/123"}`
 
 ## Notes
-- Worker resolves direct media URL via RapidAPI (`RAPIDAPI_KEY`) and stores signed remote redirect keys.
-- Signed `/v1/files/stream` now redirects for `remote:` keys.
+- Worker resolves direct media URL using self-hosted `yt-dlp` and stores signed remote redirect keys.
+- Signed `/v1/files/stream` redirects for `remote:` keys.
 - For private object storage (R2/S3), extend stream handler for non-remote keys.

@@ -3,10 +3,11 @@ import { nanoid } from "nanoid";
 import { config } from "./config.js";
 import { initDb, pool } from "./db.js";
 import { jobsQueue, redis } from "./queue.js";
-import { buildPreview, detectPlatform, normalizeUrl } from "./platform.js";
+import { detectPlatform, normalizeUrl } from "./platform.js";
 import { authPreHandler } from "./auth.js";
 import { rateLimitPreHandler } from "./rate-limit.js";
 import { createSignedFileUrl, validateSignedFileUrl } from "./storage.js";
+import { inspectWithYtDlp } from "./extractor.js";
 
 const app = Fastify({ logger: true });
 
@@ -64,7 +65,13 @@ app.post("/v1/link/inspect", async (req, reply) => {
     const cached = await redis.get(cacheKey);
     if (cached) return JSON.parse(cached);
 
-    const preview = buildPreview(normalized, platform);
+    let preview;
+    try {
+        preview = await inspectWithYtDlp(normalized, platform);
+    } catch (err) {
+        req.log.error({ err }, "inspect failed");
+        return reply.code(502).send({ error: "failed to inspect url" });
+    }
     await redis.set(cacheKey, JSON.stringify(preview), "EX", config.inspectCacheTtlSeconds);
     return preview;
 });
