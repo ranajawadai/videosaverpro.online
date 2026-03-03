@@ -1,0 +1,287 @@
+openapi: 3.0.3
+info:
+  title: VideoSaverPro API
+  version: 1.0.0
+  description: |
+    API for link inspection, asynchronous download jobs, status tracking, and signed file retrieval.
+servers:
+  - url: https://api.videosaverpro.online
+security:
+  - ApiKeyAuth: []
+paths:
+  /v1/health:
+    get:
+      summary: Health check
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+  /v1/link/inspect:
+    post:
+      summary: Inspect URL and return preview metadata
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InspectRequest'
+      responses:
+        '200':
+          description: Inspection response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InspectResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /v1/jobs:
+    post:
+      summary: Create a download job
+      parameters:
+        - in: header
+          name: Idempotency-Key
+          required: false
+          schema:
+            type: string
+          description: Optional idempotency key to prevent duplicate jobs.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateJobRequest'
+      responses:
+        '202':
+          description: Job accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateJobResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /v1/jobs/{job_id}:
+    get:
+      summary: Get job status
+      parameters:
+        - $ref: '#/components/parameters/JobId'
+      responses:
+        '200':
+          description: Job status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobStatusResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /v1/jobs/{job_id}/files:
+    get:
+      summary: Get signed file links for completed job
+      parameters:
+        - $ref: '#/components/parameters/JobId'
+      responses:
+        '200':
+          description: Signed files
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobFilesResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /v1/jobs/{job_id}/cancel:
+    post:
+      summary: Cancel a queued/running job
+      parameters:
+        - $ref: '#/components/parameters/JobId'
+      responses:
+        '200':
+          description: Cancellation result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  job_id:
+                    type: string
+                  status:
+                    type: string
+                    example: cancelled
+  /v1/files/stream:
+    get:
+      summary: Validate signed URL and stream/redirect file (placeholder)
+      parameters:
+        - in: query
+          name: key
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: exp
+          required: true
+          schema:
+            type: integer
+        - in: query
+          name: sig
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Stream/redirect response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  key:
+                    type: string
+        '403':
+          description: Invalid signature
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-Api-Key
+  parameters:
+    JobId:
+      name: job_id
+      in: path
+      required: true
+      schema:
+        type: string
+  responses:
+    BadRequest:
+      description: Invalid request
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+    RateLimited:
+      description: Too many requests
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+  schemas:
+    InspectRequest:
+      type: object
+      required: [url]
+      properties:
+        url:
+          type: string
+          format: uri
+    InspectResponse:
+      type: object
+      properties:
+        platform:
+          type: string
+          example: tiktok
+        title:
+          type: string
+        thumbnail_url:
+          type: string
+          format: uri
+        duration_seconds:
+          type: integer
+          nullable: true
+        is_playlist:
+          type: boolean
+        qualities:
+          type: array
+          items:
+            type: object
+            properties:
+              label:
+                type: string
+              format:
+                type: string
+              filesize_estimate:
+                type: integer
+                nullable: true
+    CreateJobRequest:
+      type: object
+      required: [url]
+      properties:
+        url:
+          type: string
+          format: uri
+        quality:
+          type: string
+          example: 1080p
+        format:
+          type: string
+          example: mp4
+        include_audio:
+          type: boolean
+          default: true
+    CreateJobResponse:
+      type: object
+      properties:
+        job_id:
+          type: string
+        status:
+          type: string
+          example: queued
+    JobStatusResponse:
+      type: object
+      properties:
+        job_id:
+          type: string
+        status:
+          type: string
+          enum: [queued, processing, completed, failed, cancelled]
+        progress:
+          type: integer
+          minimum: 0
+          maximum: 100
+        platform:
+          type: string
+        title:
+          type: string
+        error:
+          type: string
+          nullable: true
+    JobFilesResponse:
+      type: object
+      properties:
+        job_id:
+          type: string
+        expires_at:
+          type: string
+          format: date-time
+        files:
+          type: array
+          items:
+            type: object
+            properties:
+              label:
+                type: string
+              url:
+                type: string
+                format: uri

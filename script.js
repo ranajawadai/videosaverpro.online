@@ -110,24 +110,70 @@ async function handleDownload(e) {
     resultBox.innerHTML = '';
 
     try {
-        const response = await fetch('/api/download', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ url })
-        });
+        const apiBase = window.VSP_API_BASE || '';
+        let videoUrl;
+        let title;
 
-        if (!response.ok) {
-            throw new Error('Request failed');
+        if (apiBase) {
+            const inspectRes = await fetch(`${apiBase}/v1/link/inspect`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ url })
+            });
+            if (!inspectRes.ok) throw new Error('Inspect failed');
+            const preview = await inspectRes.json();
+
+            const createRes = await fetch(`${apiBase}/v1/jobs`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ url, quality: '1080p', format: 'mp4' })
+            });
+            if (!createRes.ok) throw new Error('Job creation failed');
+            const created = await createRes.json();
+            const jobId = created?.job_id;
+            if (!jobId) throw new Error('Job id missing');
+
+            let attempts = 0;
+            let statusData = null;
+            while (attempts < 20) {
+                await new Promise((r) => setTimeout(r, 1200));
+                const statusRes = await fetch(`${apiBase}/v1/jobs/${jobId}`);
+                if (!statusRes.ok) throw new Error('Status check failed');
+                statusData = await statusRes.json();
+                if (statusData.status === 'completed') break;
+                if (statusData.status === 'failed' || statusData.status === 'cancelled') {
+                    throw new Error(statusData.error || 'Processing failed');
+                }
+                attempts += 1;
+            }
+
+            if (!statusData || statusData.status !== 'completed') {
+                throw new Error('Job timed out');
+            }
+
+            const filesRes = await fetch(`${apiBase}/v1/jobs/${jobId}/files`);
+            if (!filesRes.ok) throw new Error('File fetch failed');
+            const files = await filesRes.json();
+            videoUrl = files?.files?.[0]?.url;
+            title = statusData?.title || preview?.title || 'Video Ready';
+        } else {
+            const response = await fetch('/api/download', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ url })
+            });
+
+            if (!response.ok) {
+                throw new Error('Request failed');
+            }
+
+            const data = await response.json();
+            const media = data?.medias?.find((m) => !m.watermark && m.extension === 'mp4') || data?.medias?.[0];
+            videoUrl = media?.url;
+            title = data?.title || 'Video Ready';
         }
 
-        const data = await response.json();
-        const media = data?.medias?.find((m) => !m.watermark && m.extension === 'mp4') || data?.medias?.[0];
-        const videoUrl = media?.url;
-        const title = data?.title || 'Video Ready';
-
-        if (!videoUrl) {
-            throw new Error('No video found');
-        }
+        if (!videoUrl) throw new Error('No video found');
 
         const safeTitle = title
             .replace(/&/g, '&amp;')

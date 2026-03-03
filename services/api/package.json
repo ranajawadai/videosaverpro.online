@@ -1,0 +1,17 @@
+{
+  "name": "videosaverpro-api",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node src/index.js",
+    "start": "node src/index.js"
+  },
+  "dependencies": {
+    "bullmq": "^5.10.3",
+    "fastify": "^4.28.1",
+    "ioredis": "^5.4.1",
+    "nanoid": "^5.0.7",
+    "pg": "^8.12.0"
+  }
+}
