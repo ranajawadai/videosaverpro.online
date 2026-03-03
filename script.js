@@ -80,6 +80,30 @@ function showNotification(message, type = 'info') {
     }, 2500);
 }
 
+function formatDuration(seconds) {
+    if (!seconds || Number.isNaN(Number(seconds))) return '';
+    const s = Number(seconds);
+    const h = Math.floor(s / 3600);
+    const m = Math.floor((s % 3600) / 60);
+    const sec = Math.floor(s % 60);
+    if (h > 0) return `${h}:${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
+    return `${m}:${String(sec).padStart(2, '0')}`;
+}
+
+async function triggerFileDownload(url, filename = 'videosaverpro-download.mp4') {
+    const response = await fetch(url, { method: 'GET' });
+    if (!response.ok) throw new Error('Download request failed');
+    const blob = await response.blob();
+    const objectUrl = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = objectUrl;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(objectUrl), 2000);
+}
+
 async function handleDownload(e) {
     e.preventDefault();
 
@@ -165,13 +189,36 @@ async function handleDownload(e) {
             .replace(/"/g, '&quot;')
             .replace(/'/g, '&#039;');
 
+        const previewDuration = formatDuration(preview?.duration_seconds);
+        const thumb = preview?.thumbnail_url;
+        const downloadFileName = `${(title || 'video').replace(/[^a-z0-9\-_\s]/gi, '').trim().replace(/\s+/g, '_') || 'video'}.mp4`;
+
         resultBox.innerHTML = `
             <div class="result-box">
+                ${thumb ? `<img src="${thumb}" alt="${safeTitle}" style="width:100%;max-width:460px;border-radius:12px;display:block;margin:0 auto 12px;object-fit:cover;">` : ''}
                 <h3>${safeTitle}</h3>
-                <p style="color: var(--text-light); margin-bottom: 1rem;">Your video is ready to download</p>
-                <button class="download-result-btn" onclick="window.open('${videoUrl}', '_blank')">Download HD Video</button>
+                <p style="color: var(--text-light); margin-bottom: 1rem;">
+                    ${previewDuration ? `Duration: ${previewDuration} · ` : ''}Your video is ready to download
+                </p>
+                <button class="download-result-btn" id="downloadReadyBtn">Download HD Video</button>
             </div>
         `;
+        const readyBtn = qs('downloadReadyBtn');
+        if (readyBtn) {
+            readyBtn.addEventListener('click', async () => {
+                readyBtn.disabled = true;
+                readyBtn.textContent = 'Downloading...';
+                try {
+                    await triggerFileDownload(videoUrl, downloadFileName);
+                    showNotification('Download started', 'success');
+                } catch {
+                    showNotification('Download failed', 'error');
+                } finally {
+                    readyBtn.disabled = false;
+                    readyBtn.textContent = 'Download HD Video';
+                }
+            });
+        }
         showNotification('Video ready to download', 'success');
     } catch (error) {
         console.error(error);

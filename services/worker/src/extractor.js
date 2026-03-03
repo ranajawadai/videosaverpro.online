@@ -41,16 +41,23 @@ function selectBestMediaUrl(meta, wantedQuality = "1080p", wantedFormat = "mp4")
     const formats = Array.isArray(meta.formats) ? meta.formats : [];
     const targetHeight = Number(String(wantedQuality).replace("p", "")) || 1080;
 
-    const candidates = formats.filter((f) =>
+    // Prefer progressive formats (video + audio in one URL) to avoid silent output.
+    const progressive = formats.filter((f) =>
         f &&
         f.url &&
         f.vcodec &&
         f.vcodec !== "none" &&
+        f.acodec &&
+        f.acodec !== "none" &&
         (!wantedFormat || f.ext === wantedFormat)
     );
 
+    const candidates = progressive.length ? progressive : formats.filter((f) =>
+        f && f.url && f.vcodec && f.vcodec !== "none"
+    );
+
     if (!candidates.length) {
-        const fallback = formats.find((f) => f?.url && f?.vcodec && f.vcodec !== "none");
+        const fallback = formats.find((f) => f?.url);
         return fallback ? fallback.url : null;
     }
 
@@ -75,4 +82,3 @@ export async function resolveJobMedia(url, quality, format) {
         mediaUrl
     };
 }
-

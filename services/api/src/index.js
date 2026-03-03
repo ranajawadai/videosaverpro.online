@@ -1,5 +1,6 @@
 import Fastify from "fastify";
 import { nanoid } from "nanoid";
+import { Readable } from "stream";
 import { config } from "./config.js";
 import { initDb, pool } from "./db.js";
 import { jobsQueue, redis } from "./queue.js";
@@ -181,7 +182,18 @@ app.get("/v1/files/stream", async (req, reply) => {
         if (!/^https?:\/\//i.test(target)) {
             return reply.code(400).send({ error: "invalid redirect target" });
         }
-        return reply.redirect(target);
+        const upstream = await fetch(target, { method: "GET", redirect: "follow" });
+        if (!upstream.ok || !upstream.body) {
+            return reply.code(502).send({ error: "failed to fetch upstream media" });
+        }
+
+        const filename = "videosaverpro-download.mp4";
+        reply.header("Content-Type", upstream.headers.get("content-type") || "video/mp4");
+        reply.header("Content-Disposition", `attachment; filename="${filename}"`);
+        reply.header("Cache-Control", "no-store");
+        reply.header("Access-Control-Allow-Origin", resolveAllowedOrigin(req.headers.origin));
+
+        return reply.send(Readable.fromWeb(upstream.body));
     }
 
     // TODO: implement real object-store streaming for non-remote keys
