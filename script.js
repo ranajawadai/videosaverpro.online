@@ -104,6 +104,23 @@ async function triggerFileDownload(url, filename = 'videosaverpro-download.mp4')
     setTimeout(() => URL.revokeObjectURL(objectUrl), 2000);
 }
 
+function escapeHtml(value) {
+    return String(value || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
+function normalizeFileName(title) {
+    const cleaned = String(title || 'video')
+        .replace(/[^a-z0-9\-_\s]/gi, '')
+        .trim()
+        .replace(/\s+/g, '_');
+    return `${cleaned || 'video'}.mp4`;
+}
+
 async function handleDownload(e) {
     e.preventDefault();
 
@@ -182,25 +199,22 @@ async function handleDownload(e) {
 
         if (!videoUrl) throw new Error('No video found');
 
-        const safeTitle = title
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#039;');
-
+        const safeTitle = escapeHtml(title);
         const previewDuration = formatDuration(preview?.duration_seconds);
-        const thumb = preview?.thumbnail_url;
-        const downloadFileName = `${(title || 'video').replace(/[^a-z0-9\-_\s]/gi, '').trim().replace(/\s+/g, '_') || 'video'}.mp4`;
+        const thumb = preview?.thumbnail_url || statusData?.thumbnail_url || '/og-image.png';
+        const selectedFile = files?.files?.[0] || {};
+        const selectedLabel = selectedFile.label ? escapeHtml(selectedFile.label) : 'Best Available';
+        const readyBtnLabel = `Download ${selectedLabel}`;
+        const downloadFileName = normalizeFileName(title);
 
         resultBox.innerHTML = `
             <div class="result-box">
-                ${thumb ? `<img src="${thumb}" alt="${safeTitle}" style="width:100%;max-width:460px;border-radius:12px;display:block;margin:0 auto 12px;object-fit:cover;">` : ''}
+                <img src="${escapeHtml(thumb)}" alt="${safeTitle}" style="width:100%;max-width:460px;border-radius:12px;display:block;margin:0 auto 12px;object-fit:cover;">
                 <h3>${safeTitle}</h3>
                 <p style="color: var(--text-light); margin-bottom: 1rem;">
-                    ${previewDuration ? `Duration: ${previewDuration} · ` : ''}Your video is ready to download
+                    ${previewDuration ? `Duration: ${previewDuration} | ` : ''}Your video is ready to download
                 </p>
-                <button class="download-result-btn" id="downloadReadyBtn">Download HD Video</button>
+                <button class="download-result-btn" id="downloadReadyBtn">${readyBtnLabel}</button>
             </div>
         `;
         const readyBtn = qs('downloadReadyBtn');
@@ -215,7 +229,7 @@ async function handleDownload(e) {
                     showNotification('Download failed', 'error');
                 } finally {
                     readyBtn.disabled = false;
-                    readyBtn.textContent = 'Download HD Video';
+                    readyBtn.textContent = readyBtnLabel;
                 }
             });
         }

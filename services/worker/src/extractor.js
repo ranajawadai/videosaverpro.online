@@ -37,7 +37,7 @@ function runYtDlpJson(url, timeoutMs = 45000) {
     });
 }
 
-function selectBestMediaUrl(meta, wantedQuality = "1080p", wantedFormat = "mp4") {
+function selectBestMediaFormat(meta, wantedQuality = "1080p", wantedFormat = "mp4") {
     const formats = Array.isArray(meta.formats) ? meta.formats : [];
     const targetHeight = Number(String(wantedQuality).replace("p", "")) || 1080;
 
@@ -56,10 +56,7 @@ function selectBestMediaUrl(meta, wantedQuality = "1080p", wantedFormat = "mp4")
         f && f.url && f.vcodec && f.vcodec !== "none"
     );
 
-    if (!candidates.length) {
-        const fallback = formats.find((f) => f?.url);
-        return fallback ? fallback.url : null;
-    }
+    if (!candidates.length) return formats.find((f) => f?.url) || null;
 
     candidates.sort((a, b) => {
         const ah = Number(a.height || 0);
@@ -70,15 +67,20 @@ function selectBestMediaUrl(meta, wantedQuality = "1080p", wantedFormat = "mp4")
         return bh - ah;
     });
 
-    return candidates[0]?.url || null;
+    return candidates[0] || null;
 }
 
 export async function resolveJobMedia(url, quality, format) {
     const meta = await runYtDlpJson(url, Number(process.env.YTDLP_TIMEOUT_MS || 45000));
-    const mediaUrl = selectBestMediaUrl(meta, quality, format);
+    const selected = selectBestMediaFormat(meta, quality, format);
+    const height = Number(selected?.height || 0);
+    const qualityLabel = height > 0 ? `${height}p MP4` : "Best Available MP4";
+    const hasAudio = Boolean(selected?.acodec && selected.acodec !== "none");
     return {
         title: meta.title || "Download ready",
         thumbnail: meta.thumbnail || "https://www.videosaverpro.online/og-image.png",
-        mediaUrl
+        mediaUrl: selected?.url || null,
+        qualityLabel,
+        hasAudio
     };
 }

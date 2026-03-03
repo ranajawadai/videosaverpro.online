@@ -58,7 +58,8 @@ async function processDownloadJob(data) {
     // Stage 3: store remote target key for signed redirect
     const storageKey = `remote:${Buffer.from(directMediaUrl, "utf8").toString("base64url")}`;
     await new Promise((r) => setTimeout(r, 200));
-    await addJobFile(id, "Primary Download", storageKey, null);
+    const label = resolved?.qualityLabel || "Best Available MP4";
+    await addJobFile(id, label, storageKey, null);
 
     await markJob(id, {
         status: "completed",
