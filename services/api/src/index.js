@@ -14,16 +14,28 @@ const app = Fastify({ logger: true });
 
 function resolveAllowedOrigin(origin) {
     const raw = process.env.CORS_ORIGINS || config.corsOrigin || "https://www.videosaverpro.online,https://videosaverpro.online";
-    const allowlist = raw.split(",").map((v) => v.trim()).filter(Boolean);
-    if (origin && allowlist.includes(origin)) return origin;
-    return allowlist[0] || "https://www.videosaverpro.online";
+    const allowlist = raw
+        .split(",")
+        .map((v) => v.trim().replace(/\/+$/, "").toLowerCase())
+        .filter(Boolean);
+
+    const normalizedOrigin = String(origin || "").trim().replace(/\/+$/, "").toLowerCase();
+    const isDefaultDomainOrigin = /^https:\/\/(www\.)?videosaverpro\.online$/i.test(normalizedOrigin);
+
+    if (normalizedOrigin && (allowlist.includes(normalizedOrigin) || isDefaultDomainOrigin)) {
+        return origin;
+    }
+
+    return "https://www.videosaverpro.online";
 }
 
 app.addHook("onRequest", async (req, reply) => {
     const allowedOrigin = resolveAllowedOrigin(req.headers.origin);
     reply.header("Access-Control-Allow-Origin", allowedOrigin);
+    reply.header("Vary", "Origin");
     reply.header("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
     reply.header("Access-Control-Allow-Headers", "Content-Type,Authorization,X-Api-Key,Idempotency-Key");
+    reply.header("Access-Control-Max-Age", "86400");
     if (req.method === "OPTIONS") return reply.code(204).send();
 });
 

@@ -176,7 +176,7 @@ async function handleDownload(e) {
         let attempts = 0;
         let statusData = null;
         while (attempts < 20) {
-            await new Promise((r) => setTimeout(r, 1200));
+            await new Promise((r) => setTimeout(r, 900));
             const statusRes = await fetch(`${apiBase}/v1/jobs/${jobId}`);
             if (!statusRes.ok) throw new Error('Status check failed');
             statusData = await statusRes.json();
