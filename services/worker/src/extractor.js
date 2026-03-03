@@ -40,21 +40,24 @@ function runYtDlpJson(url, timeoutMs = 45000) {
 function selectBestMediaFormat(meta, wantedQuality = "1080p", wantedFormat = "mp4") {
     const formats = Array.isArray(meta.formats) ? meta.formats : [];
     const targetHeight = Number(String(wantedQuality).replace("p", "")) || 1080;
+    const normalizedWantedFormat = String(wantedFormat || "").trim().toLowerCase();
 
-    // Prefer progressive formats (video + audio in one URL) to avoid silent output.
+    // Only accept direct formats that already include both audio and video.
     const progressive = formats.filter((f) =>
         f &&
         f.url &&
         f.vcodec &&
         f.vcodec !== "none" &&
         f.acodec &&
-        f.acodec !== "none" &&
-        (!wantedFormat || f.ext === wantedFormat)
+        f.acodec !== "none"
     );
 
-    const candidates = progressive.length ? progressive : formats.filter((f) =>
-        f && f.url && f.vcodec && f.vcodec !== "none"
-    );
+    const exactExt = normalizedWantedFormat
+        ? progressive.filter((f) => String(f.ext || "").toLowerCase() === normalizedWantedFormat)
+        : progressive;
+
+    // Prefer requested extension when available; otherwise keep audio+video constraint.
+    const candidates = exactExt.length ? exactExt : progressive;
 
     if (!candidates.length) return null;
 
@@ -67,6 +70,9 @@ function selectBestMediaFormat(meta, wantedQuality = "1080p", wantedFormat = "mp
         const ad = Math.abs(ah - targetHeight);
         const bd = Math.abs(bh - targetHeight);
         if (ad !== bd) return ad - bd;
+        const atbr = Number(a.tbr || 0);
+        const btbr = Number(b.tbr || 0);
+        if (atbr !== btbr) return btbr - atbr;
         return bh - ah;
     });
 
@@ -78,7 +84,8 @@ export async function resolveJobMedia(url, quality, format) {
     const selected = selectBestMediaFormat(meta, quality, format);
     const targetHeight = Number(String(quality || "1080p").replace("p", "")) || 1080;
     const height = Number(selected?.height || 0);
-    const qualityLabel = height > 0 ? `${height}p MP4` : `${targetHeight}p MP4`;
+    const extLabel = String(selected?.ext || format || "mp4").toUpperCase();
+    const qualityLabel = height > 0 ? `${height}p ${extLabel}` : `${targetHeight}p ${extLabel}`;
     const hasAudio = Boolean(selected?.acodec && selected.acodec !== "none");
     return {
         title: meta.title || "Download ready",

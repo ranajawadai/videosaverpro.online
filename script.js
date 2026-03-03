@@ -90,18 +90,14 @@ function formatDuration(seconds) {
     return `${m}:${String(sec).padStart(2, '0')}`;
 }
 
-async function triggerFileDownload(url, filename = 'videosaverpro-download.mp4') {
-    const response = await fetch(url, { method: 'GET' });
-    if (!response.ok) throw new Error('Download request failed');
-    const blob = await response.blob();
-    const objectUrl = URL.createObjectURL(blob);
+function triggerFileDownload(url, filename = 'videosaverpro-download.mp4') {
     const a = document.createElement('a');
-    a.href = objectUrl;
+    a.href = url;
     a.download = filename;
+    a.rel = 'noopener';
     document.body.appendChild(a);
     a.click();
     a.remove();
-    setTimeout(() => URL.revokeObjectURL(objectUrl), 2000);
 }
 
 function escapeHtml(value) {
@@ -163,6 +159,21 @@ async function handleDownload(e) {
         if (!inspectRes.ok) throw new Error('Inspect failed');
         const preview = await inspectRes.json();
 
+        const previewTitle = preview?.title || 'Preview ready';
+        const previewDuration = formatDuration(preview?.duration_seconds);
+        const previewThumb = preview?.thumbnail_url || '/og-image.png';
+        resultBox.innerHTML = `
+            <div class="result-box">
+                <img src="${escapeHtml(previewThumb)}" alt="${escapeHtml(previewTitle)}" style="width:100%;max-width:460px;border-radius:12px;display:block;margin:0 auto 12px;object-fit:cover;">
+                <h3>${escapeHtml(previewTitle)}</h3>
+                <p style="color: var(--text-light); margin-bottom: 1rem;">
+                    ${previewDuration ? `Duration: ${previewDuration} | ` : ''}Preview loaded. Preparing 1080p download...
+                </p>
+                <p id="processingStatus" style="color: var(--text-light);">Processing your video...</p>
+            </div>
+        `;
+        const processingStatus = qs('processingStatus');
+
         const createRes = await fetch(`${apiBase}/v1/jobs`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -175,11 +186,19 @@ async function handleDownload(e) {
 
         let attempts = 0;
         let statusData = null;
-        while (attempts < 20) {
-            await new Promise((r) => setTimeout(r, 900));
+        while (attempts < 30) {
+            await new Promise((r) => setTimeout(r, 700));
             const statusRes = await fetch(`${apiBase}/v1/jobs/${jobId}`);
             if (!statusRes.ok) throw new Error('Status check failed');
             statusData = await statusRes.json();
+            const progress = Number(statusData?.progress || 0);
+            if (processingStatus) {
+                if (progress > 0 && progress < 100) {
+                    processingStatus.textContent = `Processing your video... ${Math.round(progress)}%`;
+                } else {
+                    processingStatus.textContent = 'Processing your video...';
+                }
+            }
             if (statusData.status === 'completed') break;
             if (statusData.status === 'failed' || statusData.status === 'cancelled') {
                 throw new Error(statusData.error || 'Processing failed');
@@ -200,7 +219,6 @@ async function handleDownload(e) {
         if (!videoUrl) throw new Error('No video found');
 
         const safeTitle = escapeHtml(title);
-        const previewDuration = formatDuration(preview?.duration_seconds);
         const thumb = preview?.thumbnail_url || statusData?.thumbnail_url || '/og-image.png';
         const selectedFile = files?.files?.[0] || {};
         const selectedLabel = selectedFile.label ? escapeHtml(selectedFile.label) : 'Best Available';
@@ -219,11 +237,11 @@ async function handleDownload(e) {
         `;
         const readyBtn = qs('downloadReadyBtn');
         if (readyBtn) {
-            readyBtn.addEventListener('click', async () => {
+            readyBtn.addEventListener('click', () => {
                 readyBtn.disabled = true;
                 readyBtn.textContent = 'Downloading...';
                 try {
-                    await triggerFileDownload(videoUrl, downloadFileName);
+                    triggerFileDownload(videoUrl, downloadFileName);
                     showNotification('Download started', 'success');
                 } catch {
                     showNotification('Download failed', 'error');
@@ -233,7 +251,19 @@ async function handleDownload(e) {
                 }
             });
         }
-        showNotification('Video ready to download', 'success');
+
+        let autoDownloadStarted = false;
+        try {
+            triggerFileDownload(videoUrl, downloadFileName);
+            autoDownloadStarted = true;
+        } catch {
+            autoDownloadStarted = false;
+        }
+
+        showNotification(
+            autoDownloadStarted ? 'Download started' : 'Video ready to download',
+            autoDownloadStarted ? 'success' : 'info'
+        );
     } catch (error) {
         console.error(error);
         const message = error?.message ? String(error.message) : 'Failed to download. Try another URL.';

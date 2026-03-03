@@ -4,6 +4,7 @@ compatibility_date = "2026-03-03"
 
 [vars]
 CORS_ORIGIN = "https://www.videosaverpro.online"
+CORS_ORIGINS = "https://www.videosaverpro.online,https://videosaverpro.online"
 GATEWAY_RPM = "240"
 # Set this to your backend API service URL in Cloudflare dashboard:
 # API_ORIGIN = "https://videosaverpro-api-production.up.railway.app"

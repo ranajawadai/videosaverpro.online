@@ -41,18 +41,20 @@ async function processDownloadJob(data) {
     await markJob(id, { status: "processing", progress: 10, title: `Preparing ${platform} media` });
 
     // Stage 1: metadata resolution
-    await new Promise((r) => setTimeout(r, 250));
     await markJob(id, { progress: 30, thumbnail_url: "https://www.videosaverpro.online/og-image.png" });
 
     // Stage 2: resolve direct media URL via self-hosted extractor (yt-dlp)
-    await new Promise((r) => setTimeout(r, 250));
     await markJob(id, { progress: 55, title: `Processing ${quality || "best"} ${format || "mp4"}` });
     const resolved = await resolveJobMedia(url, quality, format);
     const directMediaUrl = resolved?.mediaUrl || null;
     const selectedHeight = Number(resolved?.selectedHeight || 0);
     const minimumHeight = Number(resolved?.minimumHeight || 1080);
+    const hasAudio = Boolean(resolved?.hasAudio);
     if (!directMediaUrl || selectedHeight < minimumHeight) {
         throw new Error(`Minimum ${minimumHeight}p quality is not available for this URL.`);
+    }
+    if (!hasAudio) {
+        throw new Error("Selected stream does not include audio. Try another URL.");
     }
     await markJob(id, {
         title: resolved.title || "Download ready",
@@ -61,7 +63,6 @@ async function processDownloadJob(data) {
 
     // Stage 3: store remote target key for signed redirect
     const storageKey = `remote:${Buffer.from(directMediaUrl, "utf8").toString("base64url")}`;
-    await new Promise((r) => setTimeout(r, 200));
     const label = resolved?.qualityLabel || "Best Available MP4";
     await addJobFile(id, label, storageKey, null);
 

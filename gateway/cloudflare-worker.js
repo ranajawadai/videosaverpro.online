@@ -9,7 +9,9 @@ export default {
                 headers: {
                     "Access-Control-Allow-Origin": allowedOrigin,
                     "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
-                    "Access-Control-Allow-Headers": "Content-Type,Authorization,X-Api-Key,Idempotency-Key"
+                    "Access-Control-Allow-Headers": "Content-Type,Authorization,X-Api-Key,Idempotency-Key",
+                    "Access-Control-Max-Age": "86400",
+                    "Vary": "Origin"
                 }
             });
         }
@@ -44,9 +46,7 @@ export default {
         const response = await fetch(outbound);
         const headers = new Headers(response.headers);
         headers.set("Access-Control-Allow-Origin", allowedOrigin);
-        if (origin && origin !== allowedOrigin) {
-            headers.set("Vary", "Origin");
-        }
+        headers.set("Vary", "Origin");
         return new Response(response.body, { status: response.status, headers });
     }
 };
@@ -56,14 +56,38 @@ function json(data, status, origin) {
         status,
         headers: {
             "Content-Type": "application/json",
-            "Access-Control-Allow-Origin": origin
+            "Access-Control-Allow-Origin": origin,
+            "Vary": "Origin"
         }
     });
 }
 
 function resolveAllowedOrigin(requestOrigin, env) {
-    const raw = env.CORS_ORIGINS || env.CORS_ORIGIN || "https://www.videosaverpro.online,https://videosaverpro.online";
-    const allowlist = raw.split(",").map((v) => v.trim()).filter(Boolean);
-    if (requestOrigin && allowlist.includes(requestOrigin)) return requestOrigin;
-    return allowlist[0] || "https://www.videosaverpro.online";
+    const defaultOrigins = [
+        "https://www.videosaverpro.online",
+        "https://videosaverpro.online"
+    ];
+
+    const allowlist = new Set(defaultOrigins);
+    for (const raw of [env.CORS_ORIGINS, env.CORS_ORIGIN]) {
+        if (!raw) continue;
+        for (const item of String(raw).split(",")) {
+            const normalized = normalizeOrigin(item);
+            if (normalized) allowlist.add(normalized);
+        }
+    }
+
+    const normalizedRequestOrigin = normalizeOrigin(requestOrigin);
+    if (normalizedRequestOrigin && allowlist.has(normalizedRequestOrigin)) {
+        return requestOrigin;
+    }
+    if (normalizedRequestOrigin && /^https:\/\/(www\.)?videosaverpro\.online$/i.test(normalizedRequestOrigin)) {
+        return requestOrigin;
+    }
+
+    return defaultOrigins[0];
+}
+
+function normalizeOrigin(value) {
+    return String(value || "").trim().replace(/\/+$/, "").toLowerCase();
 }

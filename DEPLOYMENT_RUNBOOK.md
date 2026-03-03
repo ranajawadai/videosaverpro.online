@@ -9,6 +9,7 @@ Required env:
 - `REDIS_URL`
 - `API_BASE_URL`
 - `CORS_ORIGIN`
+- `CORS_ORIGINS` (set both `https://www.videosaverpro.online,https://videosaverpro.online`)
 - `JOB_QUEUE_NAME`
 - `REQUESTS_PER_MINUTE`
 - `SIGNED_URL_TTL_SECONDS`
@@ -35,6 +36,7 @@ Files:
 Set vars:
 - `API_ORIGIN` -> backend API base
 - `CORS_ORIGIN` -> frontend domain
+- `CORS_ORIGINS` -> `https://www.videosaverpro.online,https://videosaverpro.online`
 - `GATEWAY_RPM` -> edge request limit
 
 Add KV binding:
