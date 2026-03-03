@@ -10,8 +10,16 @@ import { createSignedFileUrl, validateSignedFileUrl } from "./storage.js";
 
 const app = Fastify({ logger: true });
 
+function resolveAllowedOrigin(origin) {
+    const raw = process.env.CORS_ORIGINS || config.corsOrigin || "https://www.videosaverpro.online,https://videosaverpro.online";
+    const allowlist = raw.split(",").map((v) => v.trim()).filter(Boolean);
+    if (origin && allowlist.includes(origin)) return origin;
+    return allowlist[0] || "https://www.videosaverpro.online";
+}
+
 app.addHook("onRequest", async (req, reply) => {
-    reply.header("Access-Control-Allow-Origin", config.corsOrigin);
+    const allowedOrigin = resolveAllowedOrigin(req.headers.origin);
+    reply.header("Access-Control-Allow-Origin", allowedOrigin);
     reply.header("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
     reply.header("Access-Control-Allow-Headers", "Content-Type,Authorization,X-Api-Key,Idempotency-Key");
     if (req.method === "OPTIONS") return reply.code(204).send();
@@ -168,4 +176,3 @@ start().catch((err) => {
     app.log.error(err);
     process.exit(1);
 });
-

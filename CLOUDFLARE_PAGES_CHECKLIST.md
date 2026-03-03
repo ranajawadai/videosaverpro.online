@@ -29,6 +29,7 @@ This repo contains:
 2. Set Worker vars:
    - `API_ORIGIN` = your Railway/Render API URL
    - `CORS_ORIGIN` = `https://www.videosaverpro.online`
+   - `CORS_ORIGINS` = `https://www.videosaverpro.online,https://videosaverpro.online`
    - `GATEWAY_RPM` = desired edge rate limit
 3. Bind KV namespace as `RATE_LIMIT_KV`.
 4. Route `api.videosaverpro.online/*` to this Worker.

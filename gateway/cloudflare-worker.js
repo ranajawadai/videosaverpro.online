@@ -1,7 +1,7 @@
 export default {
     async fetch(request, env) {
         const origin = request.headers.get("Origin") || "";
-        const allowedOrigin = env.CORS_ORIGIN || "https://www.videosaverpro.online";
+        const allowedOrigin = resolveAllowedOrigin(origin, env);
 
         if (request.method === "OPTIONS") {
             return new Response(null, {
@@ -59,4 +59,11 @@ function json(data, status, origin) {
             "Access-Control-Allow-Origin": origin
         }
     });
+}
+
+function resolveAllowedOrigin(requestOrigin, env) {
+    const raw = env.CORS_ORIGINS || env.CORS_ORIGIN || "https://www.videosaverpro.online,https://videosaverpro.online";
+    const allowlist = raw.split(",").map((v) => v.trim()).filter(Boolean);
+    if (requestOrigin && allowlist.includes(requestOrigin)) return requestOrigin;
+    return allowlist[0] || "https://www.videosaverpro.online";
 }
