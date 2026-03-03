@@ -161,10 +161,27 @@ app.get("/v1/files/stream", async (req, reply) => {
     const { key, exp, sig } = req.query || {};
     const valid = validateSignedFileUrl(key, exp, sig);
     if (!valid) return reply.code(403).send({ error: "invalid signature" });
-    return {
-        message: "Replace this with real R2/S3 proxy redirect.",
+
+    // Remote key format: remote:<base64url(media_url)>
+    if (typeof key === "string" && key.startsWith("remote:")) {
+        const encoded = key.slice("remote:".length);
+        let target = "";
+        try {
+            target = Buffer.from(encoded, "base64url").toString("utf8");
+        } catch {
+            return reply.code(400).send({ error: "invalid remote key" });
+        }
+        if (!/^https?:\/\//i.test(target)) {
+            return reply.code(400).send({ error: "invalid redirect target" });
+        }
+        return reply.redirect(target);
+    }
+
+    // TODO: implement real object-store streaming for non-remote keys
+    return reply.code(501).send({
+        error: "stream backend not configured for this key type",
         key
-    };
+    });
 });
 
 async function start() {

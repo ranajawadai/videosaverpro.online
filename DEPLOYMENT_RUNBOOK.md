@@ -13,6 +13,7 @@ Required env:
 - `REQUESTS_PER_MINUTE`
 - `SIGNED_URL_TTL_SECONDS`
 - `SIGNED_URL_SECRET`
+- `RAPIDAPI_KEY` (required for direct media resolution in worker)
 - `REQUIRE_API_KEY`
 - `SERVICE_API_KEY` (if required)
 
@@ -24,6 +25,7 @@ Required env:
 - `REDIS_URL`
 - `JOB_QUEUE_NAME`
 - `WORKER_CONCURRENCY`
+- `RAPIDAPI_KEY`
 
 ## 3. Cloudflare Worker Gateway
 Files:
