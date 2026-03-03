@@ -236,7 +236,8 @@ async function handleDownload(e) {
         showNotification('Video ready to download', 'success');
     } catch (error) {
         console.error(error);
-        showNotification('Failed to download. Try another URL.', 'error');
+        const message = error?.message ? String(error.message) : 'Failed to download. Try another URL.';
+        showNotification(message, 'error');
     } finally {
         downloadBtn.disabled = false;
         btnText.textContent = 'Download';

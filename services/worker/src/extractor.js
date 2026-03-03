@@ -56,9 +56,12 @@ function selectBestMediaFormat(meta, wantedQuality = "1080p", wantedFormat = "mp
         f && f.url && f.vcodec && f.vcodec !== "none"
     );
 
-    if (!candidates.length) return formats.find((f) => f?.url) || null;
+    if (!candidates.length) return null;
 
-    candidates.sort((a, b) => {
+    const hdCandidates = candidates.filter((f) => Number(f.height || 0) >= targetHeight);
+    if (!hdCandidates.length) return null;
+
+    hdCandidates.sort((a, b) => {
         const ah = Number(a.height || 0);
         const bh = Number(b.height || 0);
         const ad = Math.abs(ah - targetHeight);
@@ -67,19 +70,22 @@ function selectBestMediaFormat(meta, wantedQuality = "1080p", wantedFormat = "mp
         return bh - ah;
     });
 
-    return candidates[0] || null;
+    return hdCandidates[0] || null;
 }
 
 export async function resolveJobMedia(url, quality, format) {
     const meta = await runYtDlpJson(url, Number(process.env.YTDLP_TIMEOUT_MS || 45000));
     const selected = selectBestMediaFormat(meta, quality, format);
+    const targetHeight = Number(String(quality || "1080p").replace("p", "")) || 1080;
     const height = Number(selected?.height || 0);
-    const qualityLabel = height > 0 ? `${height}p MP4` : "Best Available MP4";
+    const qualityLabel = height > 0 ? `${height}p MP4` : `${targetHeight}p MP4`;
     const hasAudio = Boolean(selected?.acodec && selected.acodec !== "none");
     return {
         title: meta.title || "Download ready",
         thumbnail: meta.thumbnail || "https://www.videosaverpro.online/og-image.png",
         mediaUrl: selected?.url || null,
+        selectedHeight: height,
+        minimumHeight: targetHeight,
         qualityLabel,
         hasAudio
     };

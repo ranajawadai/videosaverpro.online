@@ -49,7 +49,11 @@ async function processDownloadJob(data) {
     await markJob(id, { progress: 55, title: `Processing ${quality || "best"} ${format || "mp4"}` });
     const resolved = await resolveJobMedia(url, quality, format);
     const directMediaUrl = resolved?.mediaUrl || null;
-    if (!directMediaUrl) throw new Error("No direct media URL resolved by self-hosted extractor.");
+    const selectedHeight = Number(resolved?.selectedHeight || 0);
+    const minimumHeight = Number(resolved?.minimumHeight || 1080);
+    if (!directMediaUrl || selectedHeight < minimumHeight) {
+        throw new Error(`Minimum ${minimumHeight}p quality is not available for this URL.`);
+    }
     await markJob(id, {
         title: resolved.title || "Download ready",
         thumbnail_url: resolved.thumbnail || "https://www.videosaverpro.online/og-image.png"
