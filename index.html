@@ -2,6 +2,12 @@
 <html lang="en">
 
 <head>
+    <script>
+        if (window.location.hostname === 'videosaverpro.online') {
+            const target = `https://www.videosaverpro.online${window.location.pathname}${window.location.search}${window.location.hash}`;
+            window.location.replace(target);
+        }
+    </script>
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-P7V9BZ63RF"></script>
     <script>
         window.dataLayer = window.dataLayer || [];
